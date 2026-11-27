@@ -22,149 +22,23 @@ jobs:
       - name: Установка зависимостей
         run: |
           npm install
-          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/filesystem
+          npm install @capacitor/cli@^6 @capacitor/core@^6 @capacitor/android@^6 @capacitor/filesystem@^6
           npx cap add android || true
           npx cap sync android
 
-      - name: Разрешения камеры и памяти
+      - name: Подключение плагина SAF
         run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/java/ru/sunnails/suncamera
+          cp saf-plugin/SafPickerPlugin.java android/app/src/main/java/ru/sunnails/suncamera/SafPickerPlugin.java
+          cp saf-plugin/MainActivity.java android/app/src/main/java/ru/sunnails/suncamera/MainActivity.java
 
-      - name: Регистрация плагина выбора папки
+      - name: Разрешение камеры
         run: |
-          package ru.sunnails.suncamera;
-
-          import android.os.Bundle;
-          import com.getcapacitor.BridgeActivity;
-
-          public class MainActivity extends BridgeActivity {
-              @Override
-              public void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  registerPlugin(SafPickerPlugin.class);
-              }
-          }
-
-      - name: Плагин выбора папки
-        run: |
-          package ru.sunnails.suncamera;
-
-          import android.app.Activity;
-          import android.content.Intent;
-          import android.database.Cursor;
-          import android.net.Uri;
-          import android.provider.DocumentsContract;
-          import com.getcapacitor.JSArray;
-          import com.getcapacitor.JSObject;
-          import com.getcapacitor.Plugin;
-          import com.getcapacitor.PluginCall;
-          import com.getcapacitor.PluginMethod;
-          import com.getcapacitor.annotation.CapacitorPlugin;
-          import java.io.OutputStream;
-
-          @CapacitorPlugin(name = "SafPicker")
-          public class SafPickerPlugin extends Plugin {
-
-              private static final int REQ_PICK = 10001;
-              private PluginCall pendingCall;
-
-              @PluginMethod
-              public void pickFolder(PluginCall call) {
-                  pendingCall = call;
-                  Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                  intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                          | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                          | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                  getActivity().startActivityForResult(intent, REQ_PICK);
-              }
-
-              @Override
-              public void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
-                  super.handleOnActivityResult(requestCode, resultCode, data);
-                  if (requestCode != REQ_PICK) return;
-                  PluginCall call = pendingCall;
-                  pendingCall = null;
-                  if (call == null) return;
-                  if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
-                      call.reject("cancelled");
-                      return;
-                  }
-                  Uri uri = data.getData();
-                  try {
-                      getActivity().getContentResolver().takePersistableUriPermission(uri,
-                              Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                  } catch (Exception ignored) {
-                  }
-                  JSObject ret = new JSObject();
-                  ret.put("uri", uri.toString());
-                  call.resolve(ret);
-              }
-
-              @PluginMethod
-              public void writeFile(PluginCall call) {
-                  String dir = call.getString("dir");
-                  String name = call.getString("name");
-                  String b64 = call.getString("data");
-                  if (dir == null || name == null || b64 == null) {
-                      call.reject("missing args");
-                      return;
-                  }
-                  try {
-                      Uri tree = Uri.parse(dir);
-                      String docId = DocumentsContract.getTreeDocumentId(tree);
-                      Uri target = DocumentsContract.buildDocumentUriUsingTree(tree, docId);
-                      Uri created = DocumentsContract.createDocument(
-                              getActivity().getContentResolver(), target, "image/jpeg", name);
-                      if (created == null) {
-                          call.reject("create failed");
-                          return;
-                      }
-                      byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
-                      OutputStream os = getActivity().getContentResolver().openOutputStream(created);
-                      os.write(bytes);
-                      os.flush();
-                      os.close();
-                      JSObject ret = new JSObject();
-                      ret.put("uri", created.toString());
-                      call.resolve(ret);
-                  } catch (Exception e) {
-                      call.reject("write failed: " + e.getMessage());
-                  }
-              }
-
-              @PluginMethod
-              public void listFiles(PluginCall call) {
-                  String dir = call.getString("dir");
-                  if (dir == null) {
-                      call.reject("missing dir");
-                      return;
-                  }
-                  try {
-                      Uri tree = Uri.parse(dir);
-                      Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(
-                              tree, DocumentsContract.getTreeDocumentId(tree));
-                      Cursor c = getActivity().getContentResolver().query(children,
-                              new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME},
-                              null, null, null);
-                      JSArray names = new JSArray();
-                      if (c != null) {
-                          while (c.moveToNext()) {
-                              names.put(c.getString(0));
-                          }
-                          c.close();
-                      }
-                      JSObject ret = new JSObject();
-                      ret.put("files", names);
-                      call.resolve(ret);
-                  } catch (Exception e) {
-                      call.reject("list failed: " + e.getMessage());
-                  }
-              }
-          }
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
 
       - name: Правка версий Kotlin
         run: |
-          cat >> android/app/build.gradle <<'KOTEOF'
+          cat >> android/app/build.gradle <<'EOF'
 
           configurations.all {
               resolutionStrategy {
@@ -173,7 +47,7 @@ jobs:
                   force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
               }
           }
-          KOTEOF
+          EOF
 
       - name: Сборка APK
         run: |
