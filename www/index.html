@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sun Camera</title>
+<style>
+:root{--bg:#f6ede8;--panel:#ffffff;--text:#5a3a38;--accent:#c96a55;--accent2:#b3564e;--muted:#a97e74;--frame:#ffb199;--shutter:#ff9a8a;--toast:#2b1a18}
+[data-theme=dark]{--bg:#171310;--panel:#241d1a;--text:#f3e5df;--accent:#ff9a8a;--accent2:#ff7e6b;--muted:#b99c93;--frame:#ffb199;--shutter:#ff7e6b;--toast:#efe0da}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Segoe UI',Verdana,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+#stage{position:fixed;inset:0;background:#000;touch-action:none}
+#videoWrap{position:absolute;inset:0;overflow:hidden}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#frame{position:absolute;border:2.5px solid var(--frame);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);display:none;pointer-events:none}
+#frameLabel{position:absolute;left:0;right:0;top:-28px;text-align:center;color:var(--frame);font-weight:700;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 10px) 12px 8px}
+.hbtn{background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:12px;padding:9px 12px;font-size:14px;font-weight:700;backdrop-filter:blur(4px)}
+.hbtn.on{background:var(--accent);color:#fff}
+#zoomLabel{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 56px);z-index:20;background:rgba(0,0,0,.35);color:#fff;border-radius:10px;padding:5px 9px;font-size:13px;font-weight:700}
+#controls{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 calc(env(safe-area-inset-bottom) + 18px)}
+.row{display:flex;gap:10px;align-items:center}
+.cbtn{background:rgba(0,0,0,.4);color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700}
+#shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:var(--shutter);box-shadow:0 4px 16px rgba(0,0,0,.4)}
+#shutter:active{transform:scale(.94)}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 130px);z-index:30;background:var(--toast);color:#fff;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.5;display:none;white-space:pre-wrap}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:35;transition:opacity .25s}
+#start{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);text-align:center;padding:24px}
+#start h2{color:var(--accent)}
+#start p{color:var(--muted);font-size:14px;max-width:320px;line-height:1.6}
+#startBtn{background:var(--accent);color:#fff;border:none;border-radius:16px;padding:14px 26px;font-size:17px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="videoWrap"><video id="video" autoplay playsinline muted></video></div>
+ <div id="frame"><div id="frameLabel"></div></div>
+</div>
+<header>
+ <button class="hbtn on" id="mStory">Сторис</button>
+ <button class="hbtn" id="mWork">Работы</button>
+ <div style="flex:1"></div>
+ <button class="hbtn" id="flipBtn">Камера ⇄</button>
+ <button class="hbtn" id="themeBtn">Темная</button>
+</header>
+<div id="zoomLabel">x1.0</div>
+<div id="controls">
+ <div class="row"><button class="cbtn" id="zOut">&minus;</button><button class="cbtn" id="zIn">+</button></div>
+ <div class="row"><button class="cbtn" id="orientBtn" style="display:none">Повернуть: горизонталь</button></div>
+ <button id="shutter" aria-label="Снять"></button>
+</div>
+<div id="toast"></div>
+<div id="flash"></div>
+<div id="start">
+ <h2>Sun Camera</h2>
+ <p>Съёмка по стандартам сайта Sun Nails. Рамка показывает, что попадёт в стандарт — всё за её пределами сохранится только в оригинале.</p>
+ <button id="startBtn">Включить камеру</button>
+</div>
+<script>
+(function(){
+"use strict";
+var video=document.getElementById('video');
+var stage=document.getElementById('stage');
+var frameEl=document.getElementById('frame'),label=document.getElementById('frameLabel');
+var zoomLabel=document.getElementById('zoomLabel');
+var toast=document.getElementById('toast'),flashEl=document.getElementById('flash');
+var mode='story';
+var orient='h';
+var zoom=1,facing='environment';
+var frame={x:0,y:0,w:0,h:0};
+var p0=0,z0=1;
+var stream=null;
+var CAP=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem?window.Capacitor.Plugins.Filesystem:null;
+var browserNames={};
+
+function setTheme(t){
+ document.documentElement.setAttribute('data-theme',t);
+ document.getElementById('themeBtn').textContent=t==='dark'?'Светлая':'Темная';
+ try{localStorage.setItem('sc_theme',t);}catch(e){}
+}
+var savedTheme='light';
+try{savedTheme=localStorage.getItem('sc_theme')||'light';}catch(e){}
+setTheme(savedTheme);
+document.getElementById('themeBtn').addEventListener('click',function(){
+ setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+});
+
+function toastMsg(t){
+ toast.textContent=t;toast.style.display='block';
+ clearTimeout(toastMsg.t);
+ toastMsg.t=setTimeout(function(){toast.style.display='none';},6000);
+}
+
+function layoutFrame(){
+ var sw=window.innerWidth,sh=window.innerHeight;
+ var top=100,bottom=230;
+ var availW=sw-28,availH=sh-top-bottom;
+ var A=mode==='story'?(9/16):(orient==='h'?(4/3):(3/4));
+ var h=Math.min(availH,availW/A),w=h*A;
+ if(w>availW){w=availW;h=w/A;}
+ frame.x=(sw-w)/2;frame.y=top+(availH-h)/2;frame.w=w;frame.h=h;
+ frameEl.style.display='block';
+ frameEl.style.left=frame.x+'px';
+ frameEl.style.top=frame.y+'px';
+ frameEl.style.width=frame.w+'px';
+ frameEl.style.height=frame.h+'px';
+ label.textContent=mode==='story'?'Кадр 1080x1920 + обложка 800x800':(orient==='h'?'Работа 1600x1200':'Работа 1200x1600');
+}
+window.addEventListener('resize',layoutFrame);
+
+function setMode(m){
+ mode=m;
+ document.getElementById('mStory').classList.toggle('on',m==='story');
+ document.getElementById('mWork').classList.toggle('on',m==='work');
+ document.getElementById('orientBtn').style.display=m==='work'?'':'none';
+ layoutFrame();
+}
+document.getElementById('mStory').addEventListener('click',function(){setMode('story');});
+document.getElementById('mWork').addEventListener('click',function(){setMode('work');});
+document.getElementById('orientBtn').addEventListener('click',function(){
+ orient=orient==='h'?'v':'h';
+ this.textContent='Повернуть: '+(orient==='h'?'горизонталь':'вертикаль');
+ layoutFrame();
+});
+
+function applyTransform(){
+ video.style.transform=(facing==='user'?'scaleX(-1) ':'')+'scale('+zoom+')';
+}
+function setZoom(z){
+ zoom=Math.max(1,Math.min(4,z));
+ applyTransform();
+ zoomLabel.textContent='x'+zoom.toFixed(1);
+}
+document.getElementById('zIn').addEventListener('click',function(){setZoom(zoom+0.25);});
+document.getElementById('zOut').addEventListener('click',function(){setZoom(zoom-0.25);});
+
+stage.addEventListener('touchstart',function(e){
+ if(e.touches.length===2){
+  p0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)||1;
+  z0=zoom;
+ }
+},{passive:true});
+stage.addEventListener('touchmove',function(e){
+ if(e.touches.length===2&&p0){
+  e.preventDefault();
+  var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)||1;
+  setZoom(z0*d/p0);
+ }
+},{passive:false});
+stage.addEventListener('touchend',function(e){if(e.touches.length<2)p0=0;},{passive:true});
+
+async function start(f){
+ if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:f,width:{ideal:1920},height:{ideal:1440}},audio:false});
+ }catch(e){
+  toastMsg('Нет доступа к камере: '+e.message);
+  return;
+ }
+ video.srcObject=stream;
+ facing=f;
+ try{await video.play();}catch(e){}
+ applyTransform();
+ setTimeout(layoutFrame,200);
+}
+document.getElementById('startBtn').addEventListener('click',function(){
+ document.getElementById('start').style.display='none';
+ start('environment');
+});
+document.getElementById('flipBtn').addEventListener('click',function(){
+ start(facing==='environment'?'user':'environment');
+});
+
+function srcRect(){
+ var sw=window.innerWidth,sh=window.innerHeight;
+ var vw=video.videoWidth,vh=video.videoHeight;
+ var b=Math.max(sw/vw,sh/vh)*zoom;
+ var dw=vw*b,dh=vh*b,ox=(sw-dw)/2,oy=(sh-dh)/2;
+ var x=(frame.x-ox)/b,y=(frame.y-oy)/b,w=frame.w/b,h=frame.h/b;
+ w=Math.min(w,vw);h=Math.min(h,vh);
+ x=Math.max(0,Math.min(vw-w,x));
+ y=Math.max(0,Math.min(vh-h,y));
+ return{x:x,y:y,w:w,h:h};
+}
+function dataURL(r,outW,outH){
+ var c=document.createElement('canvas');
+ c.width=outW;c.height=outH;
+ var g=c.getContext('2d');
+ if(facing==='user'){g.translate(outW,0);g.scale(-1,1);}
+ g.drawImage(video,r.x,r.y,r.w,r.h,0,0,outW,outH);
+ return c.toDataURL('image/jpeg',0.9);
+}
+function pickName(base,existing){
+ if(existing.indexOf(base+'.jpg')<0)return base+'.jpg';
+ for(var i=2;;i++){
+  var n=base+'_'+i+'.jpg';
+  if(existing.indexOf(n)<0)return n;
+ }
+}
+async function saveFile(base,du){
+ if(CAP){
+  try{await CAP.mkdir({path:'SunCamera',directory:'DOCUMENTS',recursive:true});}catch(e){}
+  var names=[];
+  try{
+   var rr=await CAP.readdir({path:'SunCamera',directory:'DOCUMENTS'});
+   names=(rr.files||[]).map(function(f){return f.name;});
+  }catch(e){}
+  var nm=pickName(base,names);
+  await CAP.writeFile({path:'SunCamera/'+nm,directory:'DOCUMENTS',data:du.split(',')[1]});
+  return nm;
+ }
+ browserNames[base]=browserNames[base]||[];
+ var nm2=pickName(base,browserNames[base]);
+ browserNames[base].push(nm2);
+ var a=document.createElement('a');
+ a.href=du;a.download=nm2;
+ document.body.appendChild(a);a.click();a.remove();
+ return nm2;
+}
+
+document.getElementById('shutter').addEventListener('click',async function(){
+ if(!stream||!video.videoWidth){toastMsg('Камера ещё не готова');return;}
+ flashEl.style.opacity='.7';
+ setTimeout(function(){flashEl.style.opacity='0';},140);
+ var vw=video.videoWidth,vh=video.videoHeight;
+ var k=Math.min(1,3000/Math.max(vw,vh));
+ try{
+  if(mode==='story'){
+   var r=srcRect();
+   var n1=await saveFile('kadr_storis',dataURL(r,1080,1920));
+   var sq=Math.min(r.w,r.h);
+   var sr={x:r.x+(r.w-sq)/2,y:r.y+(r.h-sq)/2,w:sq,h:sq};
+   var n2=await saveFile('oblojka_storis',dataURL(sr,800,800));
+   var n3=await saveFile('original_ctoris_kadr',dataURL({x:0,y:0,w:vw,h:vh},Math.round(vw*k),Math.round(vh*k)));
+   toastMsg('Сохранил:\n'+n1+'\n'+n2+'\n'+n3+'\nв папке SunCamera (Документы)');
+  }else{
+   var out=orient==='h'?[1600,1200]:[1200,1600];
+   var r2=srcRect();
+   var m1=await saveFile('raboti',dataURL(r2,out[0],out[1]));
+   var m2=await saveFile('original_raboti',dataURL({x:0,y:0,w:vw,h:vh},Math.round(vw*k),Math.round(vh*k)));
+   toastMsg('Сохранил:\n'+m1+'\n'+m2+'\nв папке SunCamera (Документы)');
+  }
+ }catch(e){
+  toastMsg('Ошибка сохранения: '+e.message);
+ }
+});
+layoutFrame();
+})();
+</script>
+</body>
+</html>
