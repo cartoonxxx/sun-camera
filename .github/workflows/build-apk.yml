@@ -26,9 +26,140 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Разрешение камеры и памяти
+      - name: Разрешения камеры и памяти
         run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /><uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
+
+      - name: Плагин выбора папки
+        run: |
+          APPID=$(node -p "require('./capacitor.config.json').appId")
+          DIR="android/app/src/main/java/$(echo $APPID | tr . /)"
+          mkdir -p "$DIR"
+          cat > "$DIR/SafPickerPlugin.java" <<'JAVA'
+          package __APPID__;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.provider.DocumentsContract;
+          import android.util.Base64;
+
+          import androidx.activity.result.ActivityResult;
+
+          import com.getcapacitor.JSArray;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.ActivityCallback;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          import java.io.OutputStream;
+
+          @CapacitorPlugin(name = "SafPicker")
+          public class SafPickerPlugin extends Plugin {
+
+              @PluginMethod
+              public void pickFolder(PluginCall call) {
+                  Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                  intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                          | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                          | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                  startActivityForResult(call, intent, "onFolderPicked");
+              }
+
+              @ActivityCallback
+              private void onFolderPicked(PluginCall call, ActivityResult result) {
+                  if (call == null) return;
+                  if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
+                      call.resolve(new JSObject().put("canceled", true));
+                      return;
+                  }
+                  Uri treeUri = result.getData().getData();
+                  try {
+                      getActivity().getContentResolver().takePersistableUriPermission(treeUri,
+                              Intent.FLAG_GRANT_READ_URI_PERMISSION
+                              | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                  } catch (Exception ignored) {}
+                  String label = "";
+                  try {
+                      Uri docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri,
+                              DocumentsContract.getTreeDocumentId(treeUri));
+                      Cursor c = getActivity().getContentResolver().query(docUri,
+                              new String[]{DocumentsContract.Document.DISPLAY_NAME}, null, null, null);
+                      if (c != null && c.moveToFirst()) label = c.getString(0);
+                      if (c != null) c.close();
+                  } catch (Exception ignored) {}
+                  call.resolve(new JSObject()
+                          .put("uri", treeUri.toString())
+                          .put("label", label)
+                          .put("canceled", false));
+              }
+
+              @PluginMethod
+              public void listFiles(PluginCall call) {
+                  try {
+                      Uri treeUri = Uri.parse(call.getString("uri"));
+                      Uri docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri,
+                              DocumentsContract.getTreeDocumentId(treeUri));
+                      Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(docUri,
+                              DocumentsContract.getDocumentId(docUri));
+                      JSArray arr = new JSArray();
+                      Cursor c = getActivity().getContentResolver().query(children,
+                              new String[]{DocumentsContract.Document.DISPLAY_NAME}, null, null, null);
+                      while (c != null && c.moveToNext()) arr.put(c.getString(0));
+                      if (c != null) c.close();
+                      call.resolve(new JSObject().put("names", arr));
+                  } catch (Exception e) {
+                      call.reject(e.getMessage());
+                  }
+              }
+
+              @PluginMethod
+              public void saveFile(PluginCall call) {
+                  try {
+                      Uri treeUri = Uri.parse(call.getString("uri"));
+                      String name = call.getString("name");
+                      String data = call.getString("data");
+                      Uri docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri,
+                              DocumentsContract.getTreeDocumentId(treeUri));
+                      Uri newUri = DocumentsContract.createDocument(getActivity().getContentResolver(),
+                              docUri, "image/jpeg", name);
+                      if (newUri == null) { call.reject("Не удалось создать файл"); return; }
+                      byte[] bytes = Base64.decode(data, Base64.NO_WRAP);
+                      OutputStream out = getActivity().getContentResolver().openOutputStream(newUri);
+                      out.write(bytes);
+                      out.close();
+                      String displayName = name;
+                      try {
+                          Cursor c = getActivity().getContentResolver().query(newUri,
+                                  new String[]{DocumentsContract.Document.DISPLAY_NAME}, null, null, null);
+                          if (c != null && c.moveToFirst()) displayName = c.getString(0);
+                          if (c != null) c.close();
+                      } catch (Exception ignored) {}
+                      call.resolve(new JSObject().put("name", displayName));
+                  } catch (Exception e) {
+                      call.reject(e.getMessage());
+                  }
+              }
+          }
+          JAVA
+          sed -i "s/__APPID__/$APPID/g" "$DIR/SafPickerPlugin.java"
+          cat > "$DIR/MainActivity.java" <<'JAVA'
+          package __APPID__;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  registerPlugin(SafPickerPlugin.class);
+              }
+          }
+          JAVA
+          sed -i "s/__APPID__/$APPID/g" "$DIR/MainActivity.java"
 
       - name: Правка версий Kotlin
         run: |
@@ -54,5 +185,6 @@ jobs:
         with:
           name: SunCamera-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
 
 
