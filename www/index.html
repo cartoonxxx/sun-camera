@@ -2,384 +2,354 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Sun Camera</title>
 <style>
-:root{
-  --bg:#141416; --panel:#26262a; --panel2:#333338; --text:#f2f2f2; --muted:#9a9aa0;
-  --accent:#e8937a; --accent2:#d97757; --border:#3c3c42;
-}
-body.light{
-  --bg:#f2f2f4; --panel:#ffffff; --panel2:#ececed; --text:#1c1c1e; --muted:#6b6b70;
-  --accent:#d97757; --accent2:#c05f3f; --border:#d8d8dc;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;touch-action:manipulation}
-#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:center center;z-index:0}
-#dim{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .3s;background:transparent}
-#frame{position:fixed;border:3px solid var(--accent);border-radius:18px;z-index:2;pointer-events:none;
-  box-shadow:0 0 0 200vmax rgba(0,0,0,.45)}
-body.light #frame{box-shadow:0 0 0 200vmax rgba(255,255,255,.25)}
-#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:50;transition:opacity .12s}
-/* верхняя панель: одна кнопка-меню, больше ничего */
-#topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:flex-start;padding:10px 12px}
-.pill{background:var(--panel);color:var(--text);border:none;border-radius:14px;padding:11px 16px;
-  font-size:15px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.pill:active{filter:brightness(1.2)}
-#menuBtn{display:flex;align-items:center;gap:8px}
-/* выпадающее меню */
-#menu{position:fixed;top:58px;left:12px;z-index:25;background:var(--panel);border:1px solid var(--border);
-  border-radius:16px;padding:8px;min-width:210px;display:none;flex-direction:column;gap:6px;
-  box-shadow:0 8px 24px rgba(0,0,0,.35)}
-#menu.open{display:flex}
-.mbtn{background:transparent;color:var(--text);border:none;text-align:left;padding:12px 14px;border-radius:12px;
-  font-size:16px;font-weight:600}
-.mbtn:active{background:var(--panel2)}
-.mbtn.active{background:var(--accent);color:#fff}
-.mbtn small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
-/* строка статуса под меню */
-#status{position:fixed;top:64px;left:0;right:0;text-align:center;z-index:5;font-size:14px;font-weight:700;
-  color:var(--accent);text-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none}
-body.light #status{color:var(--accent2)}
-/* нижние контролы */
-#bottom{position:fixed;bottom:0;left:0;right:0;z-index:20;padding:0 0 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
-#zoomRow{display:flex;align-items:center;gap:14px}
-.zbtn{width:52px;height:44px;border:none;border-radius:14px;background:var(--panel);color:var(--text);font-size:20px;font-weight:700}
-#zoomChip{background:var(--panel);border-radius:12px;padding:6px 12px;font-size:13px;font-weight:700;min-width:52px;text-align:center}
-#rotateBtn{background:var(--panel);color:var(--text);border:none;border-radius:14px;padding:10px 16px;font-size:14px;font-weight:700}
-#shutter{width:76px;height:76px;border-radius:50%;background:var(--accent);border:4px solid var(--text);cursor:pointer}
-#shutter:active{transform:scale(.94)}
-/* шторка настроек */
-#settings{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top-left-radius:22px;
-  border-top-right-radius:22px;padding:16px 16px 28px;transform:translateY(105%);transition:transform .25s;max-height:70vh;overflow:auto}
-#settings.open{transform:translateY(0)}
-#settings h3{font-size:17px;margin-bottom:4px}
-#settings p.sub{font-size:13px;color:var(--muted);margin-bottom:12px}
-#dirList{display:flex;flex-direction:column;gap:8px}
-.dirBtn{display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:var(--panel2);border:2px solid transparent;
-  color:var(--text);border-radius:14px;padding:12px 14px;text-align:left;font-size:16px;font-weight:700;width:100%}
-.dirBtn small{font-weight:400;font-size:12px;color:var(--muted)}
-.dirBtn.selected{border-color:var(--accent)}
-.dirBtn .mark{font-size:13px;color:var(--muted)}
-.dirBtn.selected .mark{color:var(--accent)}
-.dirBtn.bad{opacity:.45}
-#closeSettings{margin-top:12px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:13px;font-size:16px;font-weight:700}
-#scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:28;display:none}
-#scrim.open{display:block}
-#toast{position:fixed;left:12px;right:12px;bottom:120px;z-index:40;background:rgba(20,20,20,.92);color:#fff;
-  border-radius:14px;padding:12px 14px;font-size:14px;display:none;text-align:center}
-.hidden{display:none !important}
+  :root { --peach:#f7b79a; --teal:#59d3c0; --blue:#7cc4ff; --bg:#141414; --panel:#2a2622; --text:#fff; }
+  body.light { --bg:#f4efe9; --panel:#fff; --text:#222; }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+    font-family:system-ui,sans-serif; -webkit-user-select:none; user-select:none; }
+  #video { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform-origin:center; }
+  .frame { position:fixed; box-sizing:border-box; border:3px solid var(--peach); border-radius:14px;
+    pointer-events:none; display:none; }
+  #coverFrame { border:3px dashed var(--teal); border-radius:10px; }
+  #workFrame { border-color:var(--blue); }
+  .pill { position:fixed; background:rgba(0,0,0,.45); color:#fff; border:none; border-radius:22px;
+    padding:10px 16px; font-size:15px; z-index:20; }
+  body.light .pill { background:rgba(255,255,255,.75); color:#222; }
+  #menuBtn { top:10px; left:10px; font-size:16px; }
+  #statusLine { position:fixed; top:60px; left:12px; font-size:13px; z-index:15;
+    color:#fff; text-shadow:0 1px 3px #000; }
+  body.light #statusLine { color:#222; text-shadow:0 1px 3px #fff; }
+  #menu { position:fixed; top:56px; left:10px; background:var(--panel); border-radius:14px;
+    padding:6px; display:flex; flex-direction:column; gap:2px; z-index:40; min-width:200px;
+    box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  #menu.hidden { display:none; }
+  #menu button { background:none; border:none; color:var(--text); text-align:left; font-size:16px;
+    padding:13px 14px; border-radius:10px; }
+  #menu button:active { background:rgba(127,127,127,.25); }
+  #shutter { position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+    width:72px; height:72px; border-radius:50%; background:var(--peach); border:4px solid #fff; z-index:30; }
+  #zoomOut { bottom:118px; left:calc(50% - 62px); width:50px; }
+  #zoomIn  { bottom:118px; left:calc(50% + 12px); width:50px; }
+  #zoomLbl { position:fixed; bottom:158px; left:50%; transform:translateX(-50%);
+    font-size:14px; z-index:20; color:#fff; text-shadow:0 1px 3px #000; }
+  body.light #zoomLbl { color:#222; text-shadow:0 1px 3px #fff; }
+  #rotateBtn { bottom:118px; left:12px; }
+  #sheet { position:fixed; left:0; right:0; bottom:0; background:var(--panel); color:var(--text);
+    border-radius:18px 18px 0 0; padding:16px 18px 34px; z-index:60; transform:translateY(105%);
+    transition:transform .25s; box-shadow:0 -8px 40px rgba(0,0,0,.5); }
+  #sheet.open { transform:translateY(0); }
+  #sheet h3 { margin:0 0 4px; font-size:18px; display:flex; justify-content:space-between; align-items:center; }
+  #sheet h3 button { background:none; border:none; color:var(--text); font-size:20px; padding:4px 8px; }
+  .row-label { font-size:13px; opacity:.7; margin-top:10px; }
+  #curFolder { font-size:14px; margin-top:4px; word-break:break-all; }
+  .pick { display:block; width:100%; padding:15px; border-radius:12px; margin-top:10px;
+    border:1px solid rgba(127,127,127,.4); background:rgba(127,127,127,.12);
+    color:var(--text); font-size:16px; text-align:left; }
+  .hint { font-size:12px; opacity:.65; margin-top:10px; line-height:1.5; }
+  #toast { position:fixed; bottom:196px; left:12px; right:12px; background:rgba(30,20,15,.92);
+    color:#fff; border-radius:12px; padding:12px 14px; font-size:14px; z-index:70; opacity:0;
+    transition:opacity .25s; pointer-events:none; white-space:pre-line; }
 </style>
 </head>
 <body>
-<video id="cam" autoplay playsinline muted></video>
-<div id="dim"></div>
-<div id="frame"></div>
+<video id="video" autoplay playsinline muted></video>
+<div class="frame" id="storyFrame"></div>
+<div class="frame" id="coverFrame"></div>
+<div class="frame" id="workFrame"></div>
 
-<div id="topbar">
-  <button id="menuBtn" class="pill">☰ Меню</button>
+<button class="pill" id="menuBtn">☰ Меню</button>
+<div id="statusLine"></div>
+<div id="menu" class="hidden">
+  <button data-act="story">Сторис</button>
+  <button data-act="work">Работы</button>
+  <button data-act="flip">Камера ⇄</button>
+  <button data-act="theme">Светлая тема</button>
+  <button data-act="settings">⚙ Настройки</button>
 </div>
 
-<div id="menu">
-  <button class="mbtn modeBtn active" data-mode="storis">Сторис</button>
-  <button class="mbtn modeBtn" data-mode="works">Работы</button>
-  <button class="mbtn" id="camSwap">Камера ⇄</button>
-  <button class="mbtn" id="themeBtn">Светлая тема</button>
-  <button class="mbtn" id="settingsBtn">⚙ Настройки<small>куда сохранять файлы</small></button>
+<button class="pill" id="rotateBtn">Повернуть: вертикаль</button>
+<button class="pill" id="zoomOut">−</button>
+<button class="pill" id="zoomIn">+</button>
+<div id="zoomLbl">x1.0</div>
+<button id="shutter" aria-label="Снимок"></button>
+
+<div id="sheet">
+  <h3>Настройки <button id="sheetClose">✕</button></h3>
+  <div class="row-label">Папка сохранения</div>
+  <div id="curFolder"></div>
+  <button class="pick" id="pickBtn">📁 Выбрать папку через проводник…</button>
+  <button class="pick" id="resetBtn">↩ Сбросить: сохранять в память приложения</button>
+  <p class="hint">Проводник откроется как обычный файловый менеджер: листаешь дерево
+каталогов, выбираешь любую папку (например, Загрузки или Pictures) — все фото
+будут падать прямо в неё, без создания лишних подпапок.</p>
 </div>
 
-<div id="status"></div>
-
-<div id="bottom">
-  <button id="rotateBtn">Повернуть: горизонталь</button>
-  <div id="zoomRow">
-    <button id="zoomOut" class="zbtn">−</button>
-    <div id="zoomChip">x1.0</div>
-    <button id="zoomIn" class="zbtn">+</button>
-  </div>
-  <button id="shutter" aria-label="Снимок"></button>
-</div>
-
-<div id="scrim"></div>
-<div id="settings">
-  <h3>Настройки</h3>
-  <p class="sub">Куда сохранять снимки. Недоступные системой папки — серые.</p>
-  <div id="dirList"></div>
-  <button id="closeSettings">Готово</button>
-</div>
-<div id="flash"></div>
 <div id="toast"></div>
 
 <script>
 (function(){
 'use strict';
-var $=function(id){return document.getElementById(id);};
-var video=$('cam'), frame=$('frame'), statusEl=$('status'), toastEl=$('toast');
-var menu=$('menu'), settings=$('settings'), scrim=$('scrim');
+const $ = id => document.getElementById(id);
+const video = $('video');
+const SP = () => (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.SafPicker) ? Capacitor.Plugins.SafPicker : null;
 
-var FS=null;
-try{ FS = (window.Capacitor && window.Capacitor.Plugins) ? window.Capacitor.Plugins.Filesystem : null; }catch(e){ FS=null; }
+let mode='story', orient='vertical', facing='environment', light=false;
+let zoom=1, panX=0, panY=0;
+let rects={story:null, cover:null, work:null};
+let stream=null;
 
-var DIR_LIST=[
-  {key:'downloads', label:'Загрузки',             dir:'EXTERNAL_STORAGE', path:'Download/SunCamera'},
-  {key:'documents', label:'Документы',            dir:'EXTERNAL_STORAGE', path:'Documents/SunCamera'},
-  {key:'pictures',  label:'Изображения',          dir:'EXTERNAL_STORAGE', path:'Pictures/SunCamera'},
-  {key:'root',      label:'Вся память телефона',  dir:'EXTERNAL_STORAGE', path:'SunCamera'},
-  {key:'app',       label:'Папка приложения',     dir:'DATA',             path:'SunCamera'}
-];
-function dirByKey(k){ for(var i=0;i<DIR_LIST.length;i++){ if(DIR_LIST[i].key===k) return DIR_LIST[i]; } return DIR_LIST[0]; }
-
-var mode='storis', zoom=1, facing='environment', worksRot='h', busy=false;
-var chosen=null;
-try{ chosen = localStorage.getItem('suncam_dir') || 'downloads'; }catch(e){ chosen='downloads'; }
-
-/* ---------- утилиты ---------- */
 function toast(msg){
-  toastEl.textContent=msg; toastEl.style.display='block';
-  clearTimeout(toast._t); toast._t=setTimeout(function(){ toastEl.style.display='none'; },4000);
-}
-function flash(){
-  var f=$('flash'); f.style.opacity='0.85';
-  setTimeout(function(){ f.style.opacity='0'; },120);
+  const t=$('toast'); t.textContent=msg; t.style.opacity=1;
+  clearTimeout(t._h); t._h=setTimeout(()=>{t.style.opacity=0;},3800);
 }
 
 /* ---------- камера ---------- */
-function startCam(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ toast('Браузер не поддерживает камеру'); return; }
-  if(stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
-  navigator.mediaDevices.getUserMedia({
-    video:{ facingMode:facing, width:{ideal:1920}, height:{ideal:1440} }, audio:false
-  }).then(function(s){ stream=s; video.srcObject=s; })
-    .catch(function(e){ toast('Нет доступа к камере: '+(e.name||e.message)); });
+async function ensureCamera(){
+  try {
+    if (stream) stream.getTracks().forEach(t=>t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: facing, width:{ideal:1920}, height:{ideal:1080} }, audio:false });
+    video.srcObject = stream;
+    await video.play().catch(()=>{});
+  } catch(e){ toast('Нет доступа к камере: ' + (e.message||e)); }
 }
-var stream=null;
 
-/* ---------- рамка и масштаб ---------- */
+/* фикс зависаний после возврата из другого приложения */
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) ensureCamera(); });
+window.addEventListener('focus', ensureCamera);
+window.addEventListener('pageshow', ()=>ensureCamera());
+
+/* ---------- геометрия рамок ---------- */
 function layout(){
-  var cw=window.innerWidth, ch=window.innerHeight;
-  var topPad=112, botPad=170;
-  var availH=Math.max(200, ch-topPad-botPad), availW=cw-24;
-  var w,h;
-  if(mode==='storis'){
-    w=Math.min(availW, availH*9/16); h=w*16/9;
-  }else{
-    var horiz=(worksRot==='h'); var ar=horiz?(4/3):(3/4);
-    h=Math.min(availH, availW/ar); w=h*ar;
+  const vw=innerWidth, vh=innerHeight;
+  const topSafe=112, bottomSafe=172, m=10;
+  const availH=vh-topSafe-bottomSafe, availW=vw-2*m;
+  let s={x:0,y:0,w:0,h:0};
+  if (mode==='story'){
+    if (orient==='vertical'){
+      let h=Math.min(availH*0.8, availW*16/9), w=h*9/16;
+      if (w>availW){ w=availW; h=w*16/9; }
+      s={x:(vw-w)/2, y:topSafe+(availH-h)/2, w:w, h:h};
+      const ch=s.w*800/1080, cw=s.w;
+      rects.cover={x:s.x, y:s.y+(s.h-ch)/2, w:cw, h:ch};
+    } else {
+      let w=Math.min(availW*0.92, availH*16/9), h=w*9/16;
+      if (h>availH){ h=availH; w=h*16/9; }
+      s={x:(vw-w)/2, y:topSafe+(availH-h)/2, w:w, h:h};
+      const ch=s.h, cw=Math.min(s.w, ch*1080/800);
+      rects.cover={x:s.x+(s.w-cw)/2, y:s.y, w:cw, h:ch};
+    }
+    rects.work=null;
+    place($('storyFrame'), s); place($('coverFrame'), rects.cover); place($('workFrame'), null);
+    $('rotateBtn').style.display='block';
+    $('statusLine').textContent='Сторис: кадр 1080×1920 + обложка 1080×800';
+  } else {
+    let h=availH*0.62, w=h*4/3;
+    if (w>availW){ w=availW; h=w*3/4; }
+    s={x:(vw-w)/2, y:topSafe+(availH-h)/2, w:w, h:h};
+    rects.work=s; rects.story=null; rects.cover=null;
+    place($('workFrame'), s); place($('storyFrame'), null); place($('coverFrame'), null);
+    $('rotateBtn').style.display='none';
+    $('statusLine').textContent='Работы: 1600×1200';
   }
-  frame.style.width=w+'px'; frame.style.height=h+'px';
-  frame.style.left=((cw-w)/2)+'px';
-  frame.style.top=(topPad+(availH-h)/2)+'px';
 }
-function frameRect(){
-  return { x:parseFloat(frame.style.left), y:parseFloat(frame.style.top),
-           w:parseFloat(frame.style.width), h:parseFloat(frame.style.height) };
-}
-function applyZoom(){
-  video.style.transform='scale('+zoom+')';
-  $('zoomChip').textContent='x'+zoom.toFixed(1);
-}
-function srcRect(r){
-  var vw=video.videoWidth, vh=video.videoHeight;
-  if(!vw||!vh) return null;
-  var cw=window.innerWidth, ch=window.innerHeight;
-  var s=Math.max(cw/vw, ch/vh);
-  var ox=(vw*s-cw)/2, oy=(vh*s-ch)/2;
-  var cx=cw/2, cy=ch/2, z=zoom;
-  function f(x,y){ return [ ((x-cx)/z+cx+ox)/s, ((y-cy)/z+cy+oy)/s ]; }
-  var p1=f(r.x,r.y), p2=f(r.x+r.w, r.y+r.h);
-  return { x:Math.min(p1[0],p2[0]), y:Math.min(p1[1],p2[1]),
-           w:Math.abs(p2[0]-p1[0]), h:Math.abs(p2[1]-p1[1]) };
-}
-function drawCrop(r,ow,oh){
-  var c=document.createElement('canvas'); c.width=ow; c.height=oh;
-  var ctx=c.getContext('2d');
-  ctx.drawImage(video, r.x, r.y, r.w, r.h, 0, 0, ow, oh);
-  return c.toDataURL('image/jpeg', 0.93);
+function place(el, r){
+  if (!r){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.style.left=r.x+'px'; el.style.top=r.y+'px';
+  el.style.width=r.w+'px'; el.style.height=r.h+'px';
 }
 
-/* ---------- сохранение ---------- */
-function listNames(d){
-  if(!FS) return Promise.resolve([]);
-  return FS.readdir({path:d.path, directory:d.dir}).then(function(res){
-    return (res.files||[]).map(function(f){ return f.name; });
-  }).catch(function(){ return []; });
+/* ---------- съёмка ---------- */
+function captureRect(rect,outW,outH){
+  const vw=innerWidth, vh=innerHeight;
+  const w0=video.videoWidth||1280, h0=video.videoHeight||720;
+  const fit=Math.max(vw/w0, vh/h0);
+  const dispW=w0*fit*zoom, dispH=h0*fit*zoom;
+  const left=(vw-dispW)/2+panX, top=(vh-dispH)/2+panY;
+  const sx=(rect.x-left)*w0/dispW, sy=(rect.y-top)*h0/dispH;
+  const sw=rect.w*w0/dispW, sh=rect.h*h0/dispH;
+  const c=document.createElement('canvas'); c.width=outW; c.height=outH;
+  c.getContext('2d').drawImage(video, sx, sy, sw, sh, 0,0,outW,outH);
+  return c.toDataURL('image/jpeg',0.92);
 }
-function nextNumber(names, prefix){
-  var re=new RegExp('^'+prefix+'(?:__(\\d+))?\\.jpg$','i');
-  var mx=0;
-  for(var i=0;i<names.length;i++){
-    var m=names[i].match(re);
-    if(m){ mx=Math.max(mx, m[1]?parseInt(m[1],10):1); }
+function nextName(base, names){
+  let max=0;
+  for (const n of names){
+    if (!n || !n.toLowerCase().endsWith('.jpg')) continue;
+    const stem=n.slice(0,-4);
+    let m=null;
+    if (stem===base) m=1;
+    else { const mm=stem.match(new RegExp('^'+base+'__(\\d+)$')); if (mm) m=parseInt(mm[1],10); }
+    if (m) max=Math.max(max,m);
   }
-  return mx+1;
+  return max===0 ? base : base+'__'+(max+1);
 }
-function saveJpeg(dataUrl, prefix){
-  var b64=dataUrl.split(',')[1];
-  if(!FS){
-    return webDownload(dataUrl, prefix);
+async function listNames(){
+  const uri=localStorage.getItem('saveUri'), sp=SP();
+  if (uri && sp){ try{ const r=await sp.listFiles({uri:uri}); return (r&&r.names)||[]; }catch(e){} }
+  if (window.Capacitor && Capacitor.Plugins.Filesystem){
+    try{ const r=await Capacitor.Plugins.Filesystem.readdir({path:'SunCamera', directory:'EXTERNAL'});
+      return r.files.map(f=>f.name); }catch(e){}
   }
-  var first=dirByKey(chosen);
-  var order=[first, dirByKey('downloads'), dirByKey('app')];
-  var seen={}, uniq=[];
-  order.forEach(function(d){ if(d && !seen[d.key]){ seen[d.key]=1; uniq.push(d); } });
-  var i=0;
-  function attempt(){
-    if(i>=uniq.length) return webDownload(dataUrl, prefix);
-    var d=uniq[i++];
-    return FS.mkdir({path:d.path, directory:d.dir, recursive:true}).catch(function(){}).then(function(){
-      return listNames(d);
-    }).then(function(names){
-      var n=nextNumber(names, prefix);
-      var name=(n===1)?(prefix+'.jpg'):(prefix+'__'+n+'.jpg');
-      return FS.writeFile({path:d.path+'/'+name, directory:d.dir, data:b64, recursive:true}).then(function(){
-        toast('Сохранено: '+d.label+' → '+name);
-      });
-    }).catch(function(){ return attempt(); });
-  }
-  return attempt();
+  return [];
 }
-function webDownload(dataUrl, prefix){
+async function saveJpg(name, dataUrl){
+  const b64=dataUrl.split(',')[1];
+  const uri=localStorage.getItem('saveUri'), sp=SP();
+  if (uri && sp){
+    try{
+      const r=await sp.saveFile({uri:uri, name:name+'.jpg', data:b64});
+      return (localStorage.getItem('saveLabel')||'выбранная папка')+' / '+(r.name||name+'.jpg');
+    }catch(e){ /* идём в запасной вариант */ }
+  }
+  if (window.Capacitor && Capacitor.Plugins.Filesystem){
+    try{
+      await Capacitor.Plugins.Filesystem.writeFile(
+        {path:'SunCamera/'+name+'.jpg', data:b64, directory:'EXTERNAL'});
+      return 'память приложения / SunCamera / '+name+'.jpg';
+    }catch(e){}
+  }
+  const a=document.createElement('a'); a.href=dataUrl; a.download=name+'.jpg'; a.click();
+  return 'скачано: '+name+'.jpg';
+}
+async function shoot(){
+  if (!video.videoWidth){ toast('Камера ещё не готова, подожди секунду'); return; }
+  $('shutter').disabled=true;
   try{
-    var a=document.createElement('a');
-    a.href=dataUrl; a.download=prefix+'.jpg';
-    document.body.appendChild(a); a.click(); a.remove();
-    toast('Скачано в Загрузки браузера: '+prefix+'.jpg');
-  }catch(e){ toast('Не удалось сохранить файл'); }
-  return Promise.resolve();
+    const names=await listNames();
+    const k=1920/Math.max(innerWidth,innerHeight);
+    const ow=Math.round(innerWidth*k), oh=Math.round(innerHeight*k);
+    let group;
+    if (mode==='story'){
+      const n=Math.max(nextNum('oblojka_storis',names), nextNum('kadr_storis',names), nextNum('original_storis',names));
+      const tag=(x)=> x===1 ? '' : '__'+x;
+      group=[
+        ['oblojka_storis'+tag(n), captureRect(rects.cover,1080,800)],
+        ['kadr_storis'+tag(n),     captureRect(rects.story,1080,1920)],
+        ['original_storis'+tag(n), captureRect({x:0,y:0,w:innerWidth,h:innerHeight},ow,oh)]
+      ];
+    } else {
+      const n=Math.max(nextNum('kadr_rabot',names), nextNum('original_rabot',names));
+      const tag=(x)=> x===1 ? '' : '__'+x;
+      group=[
+        ['kadr_rabot'+tag(n),      captureRect(rects.work,1600,1200)],
+        ['original_rabot'+tag(n),  captureRect({x:0,y:0,w:innerWidth,h:innerHeight},ow,oh)]
+      ];
+    }
+    const saved=[];
+    for (const [name,data] of group) saved.push(await saveJpg(name,data));
+    toast('Сохранено:\n'+saved.join('\n'));
+  } catch(e){ toast('Ошибка: '+(e.message||e)); }
+  $('shutter').disabled=false;
 }
-
-/* ---------- снимок ---------- */
-function shoot(){
-  if(busy || !video.videoWidth){ if(!video.videoWidth) toast('Камера ещё не готова'); return; }
-  busy=true; flash();
-  var fr=frameRect(), jobs=[];
-  if(mode==='storis'){
-    jobs.push(['kadr_storis', {x:fr.x,y:fr.y,w:fr.w,h:fr.h}, 1080,1920]);
-    var oh=Math.min(fr.w*800/1080, fr.h);
-    jobs.push(['oblojka_storis', {x:fr.x,y:fr.y,w:fr.w,h:oh}, 1080,800]);
-    jobs.push(['original_storis', {x:0,y:0,w:window.innerWidth,h:window.innerHeight}, 0,0]);
-  }else{
-    var horiz=(worksRot==='h');
-    jobs.push(['rabota', {x:fr.x,y:fr.y,w:fr.w,h:fr.h}, horiz?1600:1200, horiz?1200:1600]);
-    jobs.push(['original_rabota', {x:0,y:0,w:window.innerWidth,h:window.innerHeight}, 0,0]);
+function nextNum(base,names){
+  let max=0;
+  for (const nm of names){
+    if (!nm||!nm.toLowerCase().endsWith('.jpg')) continue;
+    const stem=nm.slice(0,-4);
+    let m=null;
+    if (stem===base) m=1;
+    else { const mm=stem.match(new RegExp('^'+base+'__(\\d+)$')); if (mm) m=parseInt(mm[1],10); }
+    if (m) max=Math.max(max,m);
   }
-  var chain=Promise.resolve();
-  jobs.forEach(function(j){
-    chain=chain.then(function(){
-      var r=srcRect(j[1]); if(!r) return;
-      var ow=j[2]||Math.round(r.w), ohh=j[3]||Math.round(r.h);
-      return saveJpeg(drawCrop(r,ow,ohh), j[0]);
-    });
-  });
-  chain.then(function(){ busy=false; }).catch(function(){ busy=false; });
+  return max+1;
 }
 
-/* ---------- режимы и меню ---------- */
-function setMode(m){
-  mode=m;
-  var btns=document.querySelectorAll('.modeBtn');
-  for(var i=0;i<btns.length;i++){ btns[i].classList.toggle('active', btns[i].getAttribute('data-mode')===m); }
-  statusEl.textContent = (m==='storis')
-    ? 'Сторис: кадр 1080×1920 + обложка 1080×800'
-    : (worksRot==='h' ? 'Работа 1600×1200' : 'Работа 1200×1600');
-  $('rotateBtn').classList.toggle('hidden', m!=='works');
+/* ---------- меню ---------- */
+function showMenu(){ $('menu').classList.remove('hidden'); }
+function hideMenu(){ $('menu').classList.add('hidden'); }
+$('menuBtn').addEventListener('click', e=>{ e.stopPropagation();
+  $('menu').classList.toggle('hidden'); });
+document.addEventListener('click', e=>{
+  if (!$('menu').classList.contains('hidden') && !$('menu').contains(e.target)) hideMenu();
+});
+$('menu').addEventListener('click', e=>{
+  const act=e.target.dataset.act; if (!act) return;
+  hideMenu();
+  if (act==='story'||act==='work'){ mode=act; layout(); }
+  else if (act==='flip'){ facing = facing==='environment' ? 'user' : 'environment'; ensureCamera(); }
+  else if (act==='theme'){ light=!light; document.body.classList.toggle('light',light);
+    e.target.textContent = light ? 'Тёмная тема' : 'Светлая тема'; }
+  else if (act==='settings'){ openSheet(); }
+});
+
+/* ---------- настройки / выбор папки ---------- */
+function openSheet(){ updateFolderLine(); $('sheet').classList.add('open'); }
+function closeSheet(){ $('sheet').classList.remove('open'); }
+$('sheetClose').addEventListener('click', closeSheet);
+function updateFolderLine(){
+  const lbl=localStorage.getItem('saveLabel');
+  $('curFolder').textContent = lbl ? ('📁 '+lbl) : 'не выбрана — сейчас сохраняется в память приложения';
+}
+$('pickBtn').addEventListener('click', async ()=>{
+  const sp=SP();
+  if (!sp){ toast('Выбор папки работает в приложении на Android'); return; }
+  try{
+    const r=await sp.pickFolder();
+    if (!r || r.canceled) return;
+    localStorage.setItem('saveUri', r.uri);
+    localStorage.setItem('saveLabel', r.label || 'выбранная папка');
+    updateFolderLine();
+    toast('Папка сохранения: '+(r.label||r.uri));
+    closeSheet();
+  } catch(e){ toast('Не удалось открыть проводник: '+(e.message||e)); }
+});
+$('resetBtn').addEventListener('click', ()=>{
+  localStorage.removeItem('saveUri'); localStorage.removeItem('saveLabel');
+  updateFolderLine(); toast('Файлы будут сохраняться в память приложения');
+});
+
+/* ---------- зум, пан, поворот ---------- */
+function clampPan(){
+  const vw=innerWidth, vh=innerHeight;
+  const w0=video.videoWidth||1280, h0=video.videoHeight||720;
+  const fit=Math.max(vw/w0,vh/h0);
+  const dispW=w0*fit*zoom, dispH=h0*fit*zoom;
+  panX=Math.max(-(dispW-vw)/2, Math.min((dispW-vw)/2, panX));
+  panY=Math.max(-(dispH-vh)/2, Math.min((dispH-vh)/2, panY));
+}
+function applyTransform(){
+  clampPan();
+  video.style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';
+  $('zoomLbl').textContent='x'+zoom.toFixed(1);
+}
+$('zoomIn').addEventListener('click', ()=>{ zoom=Math.min(3,+(zoom+0.2).toFixed(1)); applyTransform(); });
+$('zoomOut').addEventListener('click', ()=>{ zoom=Math.max(1,+(zoom-0.2).toFixed(1)); applyTransform(); });
+$('rotateBtn').addEventListener('click', ()=>{
+  orient = orient==='vertical' ? 'horizontal' : 'vertical';
+  $('rotateBtn').textContent='Повернуть: '+(orient==='vertical'?'вертикаль':'горизонталь');
   layout();
-  menu.classList.remove('open');
-}
-$('menuBtn').addEventListener('click', function(e){
-  e.stopPropagation(); menu.classList.toggle('open');
 });
-document.addEventListener('click', function(e){
-  if(menu.classList.contains('open') && !menu.contains(e.target) && e.target.id!=='menuBtn'){
-    menu.classList.remove('open');
-  }
-});
-var modeBtns=document.querySelectorAll('.modeBtn');
-for(var i=0;i<modeBtns.length;i++){
-  (function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-mode')); }); })(modeBtns[i]);
-}
-$('camSwap').addEventListener('click', function(){
-  facing=(facing==='environment')?'user':'environment';
-  startCam(); menu.classList.remove('open');
-});
-$('themeBtn').addEventListener('click', function(){
-  var light=document.body.classList.toggle('light');
-  this.textContent=light?'Тёмная тема':'Светлая тема';
-  try{ localStorage.setItem('suncam_theme', light?'light':'dark'); }catch(e){}
-  menu.classList.remove('open');
-});
-$('settingsBtn').addEventListener('click', function(){
-  menu.classList.remove('open'); openSettings();
-});
-$('rotateBtn').addEventListener('click', function(){
-  worksRot=(worksRot==='h')?'v':'h';
-  this.textContent='Повернуть: '+(worksRot==='h'?'горизонталь':'вертикаль');
-  setMode('works');
-});
-$('zoomIn').addEventListener('click', function(){ zoom=Math.min(4, zoom+0.5); applyZoom(); });
-$('zoomOut').addEventListener('click', function(){ zoom=Math.max(1, zoom-0.5); applyZoom(); });
+let pinch=null, drag=null;
+const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+video.addEventListener('touchstart', e=>{
+  if (e.touches.length===2){ pinch={d:dist(e), z:zoom}; drag=null; }
+  else if (e.touches.length===1){ drag={x:e.touches[0].clientX,y:e.touches[0].clientY,px:panX,py:panY}; pinch=null; }
+},{passive:true});
+video.addEventListener('touchmove', e=>{
+  if (pinch && e.touches.length===2){ zoom=Math.max(1,Math.min(3, pinch.z*dist(e)/pinch.d)); applyTransform(); }
+  else if (drag && e.touches.length===1){ panX=drag.px+(e.touches[0].clientX-drag.x); panY=drag.py+(e.touches[0].clientY-drag.y); applyTransform(); }
+},{passive:true});
+video.addEventListener('touchend', ()=>{ pinch=null; drag=null; },{passive:true});
+
 $('shutter').addEventListener('click', shoot);
-
-/* ---------- настройки: выбор папки ---------- */
-function checkDir(d){
-  if(!FS) return Promise.resolve(true);
-  if(d._checked) return Promise.resolve(d._ok);
-  return FS.mkdir({path:d.path, directory:d.dir, recursive:true}).catch(function(){}).then(function(){
-    return FS.writeFile({path:d.path+'/__probe.txt', directory:d.dir, data:'ok', recursive:true});
-  }).then(function(){
-    return FS.deleteFile({path:d.path+'/__probe.txt', directory:d.dir}).catch(function(){});
-  }).then(function(){ d._ok=true; d._checked=true; return true; })
-    .catch(function(){ d._ok=false; d._checked=true; return false; });
-}
-function openSettings(){ renderSettings(); settings.classList.add('open'); scrim.classList.add('open'); }
-function closeSettings(){ settings.classList.remove('open'); scrim.classList.remove('open'); }
-function renderSettings(){
-  var list=$('dirList'); list.innerHTML='';
-  DIR_LIST.forEach(function(d){
-    var btn=document.createElement('button');
-    btn.className='dirBtn'+(d.key===chosen?' selected':'');
-    var mark=document.createElement('span'); mark.className='mark';
-    mark.textContent=(d.key===chosen)?'Выбрано ✓':'Выбрать';
-    var lbl=document.createElement('span'); lbl.textContent=d.label;
-    var sm=document.createElement('small'); sm.textContent=d.path;
-    btn.appendChild(lbl); btn.appendChild(sm); btn.appendChild(mark);
-    btn.addEventListener('click', function(){
-      if(!FS){
-        chosen=d.key; try{ localStorage.setItem('suncam_dir', chosen); }catch(e){}
-        toast('Выбрано: '+d.label+' (в браузере — Загрузки)');
-        renderSettings(); closeSettings(); return;
-      }
-      btn.querySelector('.mark').textContent='Проверяю…';
-      checkDir(d).then(function(ok){
-        if(ok){
-          chosen=d.key; try{ localStorage.setItem('suncam_dir', chosen); }catch(e){}
-          renderSettings(); closeSettings(); toast('Папка сохранения: '+d.label);
-        }else{
-          btn.classList.add('bad');
-          btn.querySelector('.mark').textContent='Недоступно системой';
-        }
-      });
-    });
-    list.appendChild(btn);
-  });
-}
-$('closeSettings').addEventListener('click', closeSettings);
-scrim.addEventListener('click', closeSettings);
-
-/* ---------- запуск ---------- */
-try{
-  var th=localStorage.getItem('suncam_theme');
-  if(th==='light'){ document.body.classList.add('light'); $('themeBtn').textContent='Тёмная тема'; }
-}catch(e){}
 window.addEventListener('resize', layout);
-setMode('storis');
-applyZoom();
-startCam();
+
+/* ---------- старт ---------- */
+layout();
+ensureCamera();
+setTimeout(()=>{
+  if (!localStorage.getItem('saveUri'))
+    toast('Выбери папку сохранения: ☰ Меню → ⚙ Настройки → «Выбрать папку…»');
+}, 1500);
 })();
 </script>
 </body>
 </html>
+
 
 
 
