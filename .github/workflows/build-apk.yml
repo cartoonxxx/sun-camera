@@ -26,9 +26,9 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Разрешения камеры и памяти
+      - name: Разрешение камеры и памяти
         run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" android:required="false" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" /><uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" /></manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /><uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
 
       - name: Правка версий Kotlin
         run: |
