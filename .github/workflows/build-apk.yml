@@ -19,24 +19,18 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Установка зависимостей
+      - name: Install dependencies
         run: |
           npm install
           npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/filesystem
           npx cap add android || true
           npx cap sync android
 
-      - name: Копирование плагина выбора папки
+      - name: Permissions in manifest
         run: |
-          mkdir -p android/app/src/main/java/ru/sunnails/suncamera
-          cp saf-plugin/SafPickerPlugin.java android/app/src/main/java/ru/sunnails/suncamera/SafPickerPlugin.java
-          cp saf-plugin/MainActivity.java android/app/src/main/java/ru/sunnails/suncamera/MainActivity.java
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" android:required="false" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /></manifest>#' android/app/src/main/AndroidManifest.xml
 
-      - name: Разрешение камеры
-        run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-feature android:name="android.hardware.camera" android:required="false" /></manifest>#' android/app/src/main/AndroidManifest.xml
-
-      - name: Правка версий Kotlin
+      - name: Pin Kotlin versions
         run: |
           cat >> android/app/build.gradle <<'EOF'
 
@@ -49,18 +43,16 @@ jobs:
           }
           EOF
 
-      - name: Сборка APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Публикация артефакта
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SunCamera-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-
 
 
