@@ -2,356 +2,384 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Sun Camera</title>
 <style>
-  :root{
-    --bg:#1b1210; --panel:#2a1e1a; --panel2:#3a2a24; --text:#f5ede8; --muted:#b9a79f;
-    --accent:#e07a5f; --accent2:#f2a68c; --frame:rgba(255,190,160,.9); --ok:#7fbf7f; --btn:rgba(255,255,255,.08);
-  }
-  body.light{
-    --bg:#faf5f0; --panel:#ffffff; --panel2:#f1e6de; --text:#2b2320; --muted:#8a7a72;
-    --accent:#d96a4a; --accent2:#c05738; --frame:rgba(200,90,60,.9); --ok:#3f8f3f; --btn:rgba(0,0,0,.06);
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
-    font-family:-apple-system,'Roboto','Segoe UI',sans-serif; touch-action:none;}
-  #start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:50;background:var(--bg)}
-  #start h1{margin:0;font-size:24px}
-  #start button{font-size:17px;padding:14px 28px;border-radius:14px;border:none;background:var(--accent);color:#fff}
-  #cam{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;display:none;z-index:1}
-  #cam.scale{transform-origin:center center}
-  #ui{position:fixed;inset:0;z-index:10;display:none;pointer-events:none}
-  #ui > *{pointer-events:auto}
-  .topbar{position:absolute;top:calc(8px + env(safe-area-inset-top));left:8px;right:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .chip{background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:20px;padding:10px 14px;font-size:15px;font-weight:600}
-  .chip.active{background:var(--accent)}
-  .spacer{flex:1}
-  #modeLabel{position:absolute;left:0;right:0;text-align:center;color:var(--frame);font-weight:700;font-size:16px;
-    text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none}
-  #frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:3px solid var(--frame);
-    border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.28);pointer-events:none;z-index:9}
-  .botbar{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px}
-  #zoomRow{display:flex;gap:14px;align-items:center}
-  #zoomRow button{background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:22px;width:52px;height:44px;font-size:20px}
-  #zoomVal{color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.7)}
-  #rotateBtn{background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:18px;padding:10px 18px;font-size:15px;font-weight:600}
-  #shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.4)}
-  #toast{position:absolute;left:12px;right:12px;bottom:calc(120px + env(safe-area-inset-bottom));background:rgba(30,20,15,.88);color:#fff;
-    border-radius:12px;padding:10px 14px;font-size:14px;display:none;pointer-events:none;z-index:20}
-  /* Настройки */
-  #settings{position:fixed;inset:0;z-index:40;display:none}
-  #settings .back{position:absolute;inset:0;background:rgba(0,0,0,.5)}
-  #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));max-height:70vh;overflow:auto}
-  #sheet h3{margin:0 0 4px 0;font-size:18px}
-  #sheet p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
-  .fold{display:block;width:100%;text-align:left;background:var(--panel2);color:var(--text);border:none;border-radius:12px;
-    padding:13px 14px;font-size:15px;margin-bottom:8px;font-weight:600}
-  .fold.sel{background:var(--accent);color:#fff}
-  .fold small{display:block;font-weight:400;font-size:12px;opacity:.8;margin-top:2px}
-  #sheetClose{width:100%;border:none;background:var(--btn);color:var(--text);border-radius:12px;padding:12px;font-size:15px;font-weight:600}
+:root{
+  --bg:#141416; --panel:#26262a; --panel2:#333338; --text:#f2f2f2; --muted:#9a9aa0;
+  --accent:#e8937a; --accent2:#d97757; --border:#3c3c42;
+}
+body.light{
+  --bg:#f2f2f4; --panel:#ffffff; --panel2:#ececed; --text:#1c1c1e; --muted:#6b6b70;
+  --accent:#d97757; --accent2:#c05f3f; --border:#d8d8dc;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;touch-action:manipulation}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:center center;z-index:0}
+#dim{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .3s;background:transparent}
+#frame{position:fixed;border:3px solid var(--accent);border-radius:18px;z-index:2;pointer-events:none;
+  box-shadow:0 0 0 200vmax rgba(0,0,0,.45)}
+body.light #frame{box-shadow:0 0 0 200vmax rgba(255,255,255,.25)}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:50;transition:opacity .12s}
+/* верхняя панель: одна кнопка-меню, больше ничего */
+#topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:flex-start;padding:10px 12px}
+.pill{background:var(--panel);color:var(--text);border:none;border-radius:14px;padding:11px 16px;
+  font-size:15px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.pill:active{filter:brightness(1.2)}
+#menuBtn{display:flex;align-items:center;gap:8px}
+/* выпадающее меню */
+#menu{position:fixed;top:58px;left:12px;z-index:25;background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:8px;min-width:210px;display:none;flex-direction:column;gap:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#menu.open{display:flex}
+.mbtn{background:transparent;color:var(--text);border:none;text-align:left;padding:12px 14px;border-radius:12px;
+  font-size:16px;font-weight:600}
+.mbtn:active{background:var(--panel2)}
+.mbtn.active{background:var(--accent);color:#fff}
+.mbtn small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+/* строка статуса под меню */
+#status{position:fixed;top:64px;left:0;right:0;text-align:center;z-index:5;font-size:14px;font-weight:700;
+  color:var(--accent);text-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none}
+body.light #status{color:var(--accent2)}
+/* нижние контролы */
+#bottom{position:fixed;bottom:0;left:0;right:0;z-index:20;padding:0 0 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
+#zoomRow{display:flex;align-items:center;gap:14px}
+.zbtn{width:52px;height:44px;border:none;border-radius:14px;background:var(--panel);color:var(--text);font-size:20px;font-weight:700}
+#zoomChip{background:var(--panel);border-radius:12px;padding:6px 12px;font-size:13px;font-weight:700;min-width:52px;text-align:center}
+#rotateBtn{background:var(--panel);color:var(--text);border:none;border-radius:14px;padding:10px 16px;font-size:14px;font-weight:700}
+#shutter{width:76px;height:76px;border-radius:50%;background:var(--accent);border:4px solid var(--text);cursor:pointer}
+#shutter:active{transform:scale(.94)}
+/* шторка настроек */
+#settings{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top-left-radius:22px;
+  border-top-right-radius:22px;padding:16px 16px 28px;transform:translateY(105%);transition:transform .25s;max-height:70vh;overflow:auto}
+#settings.open{transform:translateY(0)}
+#settings h3{font-size:17px;margin-bottom:4px}
+#settings p.sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+#dirList{display:flex;flex-direction:column;gap:8px}
+.dirBtn{display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:var(--panel2);border:2px solid transparent;
+  color:var(--text);border-radius:14px;padding:12px 14px;text-align:left;font-size:16px;font-weight:700;width:100%}
+.dirBtn small{font-weight:400;font-size:12px;color:var(--muted)}
+.dirBtn.selected{border-color:var(--accent)}
+.dirBtn .mark{font-size:13px;color:var(--muted)}
+.dirBtn.selected .mark{color:var(--accent)}
+.dirBtn.bad{opacity:.45}
+#closeSettings{margin-top:12px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:13px;font-size:16px;font-weight:700}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:28;display:none}
+#scrim.open{display:block}
+#toast{position:fixed;left:12px;right:12px;bottom:120px;z-index:40;background:rgba(20,20,20,.92);color:#fff;
+  border-radius:14px;padding:12px 14px;font-size:14px;display:none;text-align:center}
+.hidden{display:none !important}
 </style>
 </head>
 <body>
-<div id="start">
-  <h1>Sun Camera</h1>
-  <div style="color:var(--muted);text-align:center;padding:0 30px">Съёмка по стандартам сайта: сторис и фото работ</div>
-  <button id="startBtn">Включить камеру</button>
-</div>
 <video id="cam" autoplay playsinline muted></video>
-<div id="ui">
-  <div class="topbar">
-    <button class="chip" id="mStory">Сторис</button>
-    <button class="chip active" id="mWork">Работы</button>
-    <div class="spacer"></div>
-    <button class="chip" id="switchCam">Камера ⇄</button>
-    <button class="chip" id="themeBtn">Тёмная</button>
-    <button class="chip" id="settingsBtn">⚙ Настройки</button>
-  </div>
-  <div id="modeLabel"></div>
-  <div id="frame"></div>
-  <div class="botbar">
-    <div id="zoomRow">
-      <button id="zoomOut">−</button><span id="zoomVal">×1.0</span><button id="zoomIn">+</button>
-    </div>
-    <button id="rotateBtn">Повернуть: горизонталь</button>
-    <button id="shutter" aria-label="Снимок"></button>
-  </div>
-  <div id="toast"></div>
+<div id="dim"></div>
+<div id="frame"></div>
+
+<div id="topbar">
+  <button id="menuBtn" class="pill">☰ Меню</button>
 </div>
+
+<div id="menu">
+  <button class="mbtn modeBtn active" data-mode="storis">Сторис</button>
+  <button class="mbtn modeBtn" data-mode="works">Работы</button>
+  <button class="mbtn" id="camSwap">Камера ⇄</button>
+  <button class="mbtn" id="themeBtn">Светлая тема</button>
+  <button class="mbtn" id="settingsBtn">⚙ Настройки<small>куда сохранять файлы</small></button>
+</div>
+
+<div id="status"></div>
+
+<div id="bottom">
+  <button id="rotateBtn">Повернуть: горизонталь</button>
+  <div id="zoomRow">
+    <button id="zoomOut" class="zbtn">−</button>
+    <div id="zoomChip">x1.0</div>
+    <button id="zoomIn" class="zbtn">+</button>
+  </div>
+  <button id="shutter" aria-label="Снимок"></button>
+</div>
+
+<div id="scrim"></div>
 <div id="settings">
-  <div class="back"></div>
-  <div id="sheet">
-    <h3>Куда сохранять файлы</h3>
-    <p>Нажми на папку — выбор сохранится и будет действовать на все снимки.</p>
-    <button class="fold" data-dir="DOWNLOADS">Загрузки <small>Download / SunCamera — самый надёжный вариант</small></button>
-    <button class="fold" data-dir="DOCUMENTS">Документы <small>Documents / SunCamera</small></button>
-    <button class="fold" data-dir="PICTURES">Изображения <small>Pictures / SunCamera</small></button>
-    <button class="fold" data-dir="EXTERNAL_STORAGE">Вся память телефона <small>/storage/emulated/0/SunCamera</small></button>
-    <button class="fold" data-dir="APP">Папка приложения <small>работает всегда, без разрешений системы</small></button>
-    <button id="sheetClose">Готово</button>
-  </div>
+  <h3>Настройки</h3>
+  <p class="sub">Куда сохранять снимки. Недоступные системой папки — серые.</p>
+  <div id="dirList"></div>
+  <button id="closeSettings">Готово</button>
 </div>
+<div id="flash"></div>
+<div id="toast"></div>
+
 <script>
 (function(){
-  var FS = null, CAP_OK = false;
-  try { FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem; CAP_OK = !!FS; } catch(e){}
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var video=$('cam'), frame=$('frame'), statusEl=$('status'), toastEl=$('toast');
+var menu=$('menu'), settings=$('settings'), scrim=$('scrim');
 
-  var video = document.getElementById('cam');
-  var ui = document.getElementById('ui');
-  var frameEl = document.getElementById('frame');
-  var modeLabel = document.getElementById('modeLabel');
-  var toast = document.getElementById('toast');
-  var stream = null, facing = 'environment', zoom = 1.0, nativeZoom = false, cssZoom = 1.0;
+var FS=null;
+try{ FS = (window.Capacitor && window.Capacitor.Plugins) ? window.Capacitor.Plugins.Filesystem : null; }catch(e){ FS=null; }
 
-  var MODE = 'work';               // 'story' | 'work'
-  var workOrient = 'landscape';    // для режима работ
-  var theme = localStorage.getItem('sc_theme') || 'dark';
-  applyTheme();
+var DIR_LIST=[
+  {key:'downloads', label:'Загрузки',             dir:'EXTERNAL_STORAGE', path:'Download/SunCamera'},
+  {key:'documents', label:'Документы',            dir:'EXTERNAL_STORAGE', path:'Documents/SunCamera'},
+  {key:'pictures',  label:'Изображения',          dir:'EXTERNAL_STORAGE', path:'Pictures/SunCamera'},
+  {key:'root',      label:'Вся память телефона',  dir:'EXTERNAL_STORAGE', path:'SunCamera'},
+  {key:'app',       label:'Папка приложения',     dir:'DATA',             path:'SunCamera'}
+];
+function dirByKey(k){ for(var i=0;i<DIR_LIST.length;i++){ if(DIR_LIST[i].key===k) return DIR_LIST[i]; } return DIR_LIST[0]; }
 
-  var DIRS = {
-    DOWNLOADS:        { label:'Загрузки',           cap:'DOWNLOADS',        sub:'SunCamera', path:'Download/SunCamera' },
-    DOCUMENTS:        { label:'Документы',          cap:'DOCUMENTS',        sub:'SunCamera', path:'Documents/SunCamera' },
-    PICTURES:         { label:'Изображения',        cap:'PICTURES',         sub:'SunCamera', path:'Pictures/SunCamera' },
-    EXTERNAL_STORAGE: { label:'Вся память телефона',cap:'EXTERNAL_STORAGE', sub:'SunCamera', path:'/storage/emulated/0/SunCamera' },
-    APP:              { label:'Папка приложения',   cap:'DATA',             sub:'SunCamera', path:'Android/data/…/files/SunCamera' }
-  };
-  var chosenKey = localStorage.getItem('sc_dir') || 'DOWNLOADS';
+var mode='storis', zoom=1, facing='environment', worksRot='h', busy=false;
+var chosen=null;
+try{ chosen = localStorage.getItem('suncam_dir') || 'downloads'; }catch(e){ chosen='downloads'; }
 
-  function applyTheme(){
-    document.body.classList.toggle('light', theme==='light');
-    document.getElementById('themeBtn').textContent = theme==='light' ? 'Тёмная' : 'Светлая';
+/* ---------- утилиты ---------- */
+function toast(msg){
+  toastEl.textContent=msg; toastEl.style.display='block';
+  clearTimeout(toast._t); toast._t=setTimeout(function(){ toastEl.style.display='none'; },4000);
+}
+function flash(){
+  var f=$('flash'); f.style.opacity='0.85';
+  setTimeout(function(){ f.style.opacity='0'; },120);
+}
+
+/* ---------- камера ---------- */
+function startCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ toast('Браузер не поддерживает камеру'); return; }
+  if(stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
+  navigator.mediaDevices.getUserMedia({
+    video:{ facingMode:facing, width:{ideal:1920}, height:{ideal:1440} }, audio:false
+  }).then(function(s){ stream=s; video.srcObject=s; })
+    .catch(function(e){ toast('Нет доступа к камере: '+(e.name||e.message)); });
+}
+var stream=null;
+
+/* ---------- рамка и масштаб ---------- */
+function layout(){
+  var cw=window.innerWidth, ch=window.innerHeight;
+  var topPad=112, botPad=170;
+  var availH=Math.max(200, ch-topPad-botPad), availW=cw-24;
+  var w,h;
+  if(mode==='storis'){
+    w=Math.min(availW, availH*9/16); h=w*16/9;
+  }else{
+    var horiz=(worksRot==='h'); var ar=horiz?(4/3):(3/4);
+    h=Math.min(availH, availW/ar); w=h*ar;
   }
-  document.getElementById('themeBtn').addEventListener('click', function(){
-    theme = theme==='light' ? 'dark' : 'light'; localStorage.setItem('sc_theme', theme); applyTheme();
-  });
+  frame.style.width=w+'px'; frame.style.height=h+'px';
+  frame.style.left=((cw-w)/2)+'px';
+  frame.style.top=(topPad+(availH-h)/2)+'px';
+}
+function frameRect(){
+  return { x:parseFloat(frame.style.left), y:parseFloat(frame.style.top),
+           w:parseFloat(frame.style.width), h:parseFloat(frame.style.height) };
+}
+function applyZoom(){
+  video.style.transform='scale('+zoom+')';
+  $('zoomChip').textContent='x'+zoom.toFixed(1);
+}
+function srcRect(r){
+  var vw=video.videoWidth, vh=video.videoHeight;
+  if(!vw||!vh) return null;
+  var cw=window.innerWidth, ch=window.innerHeight;
+  var s=Math.max(cw/vw, ch/vh);
+  var ox=(vw*s-cw)/2, oy=(vh*s-ch)/2;
+  var cx=cw/2, cy=ch/2, z=zoom;
+  function f(x,y){ return [ ((x-cx)/z+cx+ox)/s, ((y-cy)/z+cy+oy)/s ]; }
+  var p1=f(r.x,r.y), p2=f(r.x+r.w, r.y+r.h);
+  return { x:Math.min(p1[0],p2[0]), y:Math.min(p1[1],p2[1]),
+           w:Math.abs(p2[0]-p1[0]), h:Math.abs(p2[1]-p1[1]) };
+}
+function drawCrop(r,ow,oh){
+  var c=document.createElement('canvas'); c.width=ow; c.height=oh;
+  var ctx=c.getContext('2d');
+  ctx.drawImage(video, r.x, r.y, r.w, r.h, 0, 0, ow, oh);
+  return c.toDataURL('image/jpeg', 0.93);
+}
 
-  function toastMsg(t, ms){
-    toast.textContent = t; toast.style.display='block';
-    clearTimeout(toastMsg._t); toastMsg._t = setTimeout(function(){ toast.style.display='none'; }, ms||4200);
+/* ---------- сохранение ---------- */
+function listNames(d){
+  if(!FS) return Promise.resolve([]);
+  return FS.readdir({path:d.path, directory:d.dir}).then(function(res){
+    return (res.files||[]).map(function(f){ return f.name; });
+  }).catch(function(){ return []; });
+}
+function nextNumber(names, prefix){
+  var re=new RegExp('^'+prefix+'(?:__(\\d+))?\\.jpg$','i');
+  var mx=0;
+  for(var i=0;i<names.length;i++){
+    var m=names[i].match(re);
+    if(m){ mx=Math.max(mx, m[1]?parseInt(m[1],10):1); }
   }
-
-  // ---------- размеры рамки ----------
-  function calcFrame(){
-    var W = window.innerWidth, H = window.innerHeight, w, h;
-    if (MODE==='story'){
-      // 9:16, почти во весь экран — поле сверху/снизу лишь для кнопок
-      h = Math.min(H*0.86, (W*0.97)*16/9);
-      w = h*9/16;
-    } else {
-      // 4:3
-      if (workOrient==='landscape'){ w = Math.min(W*0.97, (H*0.62)*4/3); h = w*3/4; }
-      else { h = Math.min(H*0.62, (W*0.97)*4/3); w = h*3/4; }
-    }
-    frameEl.style.width = w+'px'; frameEl.style.height = h+'px';
-    modeLabel.style.top = (frameEl.getBoundingClientRect().top - 30) + 'px';
-    modeLabel.textContent = MODE==='story'
-      ? 'Сторис: кадр 1080×1920 + обложка 800×800'
-      : 'Работа ' + (workOrient==='landscape' ? '1600×1200' : '1200×1600');
+  return mx+1;
+}
+function saveJpeg(dataUrl, prefix){
+  var b64=dataUrl.split(',')[1];
+  if(!FS){
+    return webDownload(dataUrl, prefix);
   }
-  window.addEventListener('resize', calcFrame);
-
-  // ---------- камера ----------
-  async function startCam(){
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:facing, width:{ideal:1920}, height:{ideal:1080} }, audio:false });
-    }catch(e){ toastMsg('Нет доступа к камере: '+e.message, 6000); return; }
-    video.srcObject = stream;
-    video.style.display='block'; ui.style.display='block';
-    document.getElementById('start').style.display='none';
-    setTimeout(calcFrame, 50);
+  var first=dirByKey(chosen);
+  var order=[first, dirByKey('downloads'), dirByKey('app')];
+  var seen={}, uniq=[];
+  order.forEach(function(d){ if(d && !seen[d.key]){ seen[d.key]=1; uniq.push(d); } });
+  var i=0;
+  function attempt(){
+    if(i>=uniq.length) return webDownload(dataUrl, prefix);
+    var d=uniq[i++];
+    return FS.mkdir({path:d.path, directory:d.dir, recursive:true}).catch(function(){}).then(function(){
+      return listNames(d);
+    }).then(function(names){
+      var n=nextNumber(names, prefix);
+      var name=(n===1)?(prefix+'.jpg'):(prefix+'__'+n+'.jpg');
+      return FS.writeFile({path:d.path+'/'+name, directory:d.dir, data:b64, recursive:true}).then(function(){
+        toast('Сохранено: '+d.label+' → '+name);
+      });
+    }).catch(function(){ return attempt(); });
   }
-  document.getElementById('startBtn').addEventListener('click', startCam);
+  return attempt();
+}
+function webDownload(dataUrl, prefix){
+  try{
+    var a=document.createElement('a');
+    a.href=dataUrl; a.download=prefix+'.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('Скачано в Загрузки браузера: '+prefix+'.jpg');
+  }catch(e){ toast('Не удалось сохранить файл'); }
+  return Promise.resolve();
+}
 
-  document.getElementById('switchCam').addEventListener('click', async function(){
-    facing = facing==='environment' ? 'user' : 'environment';
-    if (stream){ stream.getTracks().forEach(function(t){ t.stop(); }); await startCam(); }
-  });
-
-  function setZoom(z){
-    zoom = Math.max(1, Math.min(4, z));
-    document.getElementById('zoomVal').textContent = '×' + zoom.toFixed(1);
-    cssZoom = 1;
-    var track = stream && stream.getVideoTracks()[0];
-    if (track){
-      try{
-        track.applyConstraints({ advanced:[{ zoom: zoom }] });
-        nativeZoom = true; return;
-      }catch(e){}
-    }
-    nativeZoom = false; cssZoom = zoom;
-    video.classList.add('scale');
-    video.style.transform = 'scale(' + cssZoom + ')';
+/* ---------- снимок ---------- */
+function shoot(){
+  if(busy || !video.videoWidth){ if(!video.videoWidth) toast('Камера ещё не готова'); return; }
+  busy=true; flash();
+  var fr=frameRect(), jobs=[];
+  if(mode==='storis'){
+    jobs.push(['kadr_storis', {x:fr.x,y:fr.y,w:fr.w,h:fr.h}, 1080,1920]);
+    var oh=Math.min(fr.w*800/1080, fr.h);
+    jobs.push(['oblojka_storis', {x:fr.x,y:fr.y,w:fr.w,h:oh}, 1080,800]);
+    jobs.push(['original_storis', {x:0,y:0,w:window.innerWidth,h:window.innerHeight}, 0,0]);
+  }else{
+    var horiz=(worksRot==='h');
+    jobs.push(['rabota', {x:fr.x,y:fr.y,w:fr.w,h:fr.h}, horiz?1600:1200, horiz?1200:1600]);
+    jobs.push(['original_rabota', {x:0,y:0,w:window.innerWidth,h:window.innerHeight}, 0,0]);
   }
-  document.getElementById('zoomIn').addEventListener('click', function(){ setZoom(zoom+0.25); });
-  document.getElementById('zoomOut').addEventListener('click', function(){ setZoom(zoom-0.25); });
-  video.addEventListener('touchstart', function(e){ if (e.touches.length===2){ pinchStart = dist(e); zoomStart = zoom; } });
-  video.addEventListener('touchmove', function(e){ if (e.touches.length===2){ setZoom(zoomStart * dist(e) / pinchStart); } });
-  var pinchStart=0, zoomStart=1;
-  function dist(e){ var a=e.touches[0], b=e.touches[1]; return Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY); }
-  video.addEventListener('wheel', function(e){ setZoom(zoom + (e.deltaY<0?0.1:-0.1)); });
-
-  // ---------- режимы ----------
-  document.getElementById('mStory').addEventListener('click', function(){ MODE='story'; mark(); calcFrame(); });
-  document.getElementById('mWork').addEventListener('click', function(){ MODE='work'; mark(); calcFrame(); });
-  document.getElementById('rotateBtn').addEventListener('click', function(){
-    workOrient = workOrient==='landscape' ? 'portrait' : 'landscape';
-    this.textContent = workOrient==='landscape' ? 'Повернуть: горизонталь' : 'Повернуть: вертикаль';
-    calcFrame();
-  });
-  function mark(){
-    document.getElementById('mStory').classList.toggle('active', MODE==='story');
-    document.getElementById('mWork').classList.toggle('active', MODE==='work');
-    document.getElementById('rotateBtn').style.display = MODE==='work' ? 'block' : 'none';
-  }
-
-  // ---------- съёмка ----------
-  function cropRect(){
-    // прямоугольник кадра на экране -> координаты исходного видео
-    var fr = frameEl.getBoundingClientRect();
-    var vw = video.videoWidth, vh = video.videoHeight;
-    if (!vw || !vh) return null;
-    // как видео легло на экран (object-fit: cover)
-    var dw = window.innerWidth, dh = window.innerHeight;
-    var scale = Math.max(dw/vw, dh/vh);
-    var shownW = vw*scale*cssZoom, shownH = vh*scale*cssZoom;
-    var offX = (dw - shownW)/2, offY = (dh - shownH)/2;
-    var sx = (fr.left - offX) / (shownW/vw);
-    var sy = (fr.top  - offY) / (shownH/vh);
-    var sw = fr.width  / (shownW/vw);
-    var sh = fr.height / (shownH/vh);
-    sx = Math.max(0, Math.min(vw-sw, sx)); sy = Math.max(0, Math.min(vh-sh, sy));
-    return { x:sx, y:sy, w:sw, h:sh };
-  }
-
-  function saveBlob(blob, base, isJpgDone){
-    // расширение в имени: база .jpg, нумерация продолжается
-    resolveAndSave(blob, base).then(function(){ if (isJpgDone) isJpgDone(); }).catch(function(err){
-      toastMsg('Не удалось сохранить: ' + (err&&err.message||err), 5000);
+  var chain=Promise.resolve();
+  jobs.forEach(function(j){
+    chain=chain.then(function(){
+      var r=srcRect(j[1]); if(!r) return;
+      var ow=j[2]||Math.round(r.w), ohh=j[3]||Math.round(r.h);
+      return saveJpeg(drawCrop(r,ow,ohh), j[0]);
     });
+  });
+  chain.then(function(){ busy=false; }).catch(function(){ busy=false; });
+}
+
+/* ---------- режимы и меню ---------- */
+function setMode(m){
+  mode=m;
+  var btns=document.querySelectorAll('.modeBtn');
+  for(var i=0;i<btns.length;i++){ btns[i].classList.toggle('active', btns[i].getAttribute('data-mode')===m); }
+  statusEl.textContent = (m==='storis')
+    ? 'Сторис: кадр 1080×1920 + обложка 1080×800'
+    : (worksRot==='h' ? 'Работа 1600×1200' : 'Работа 1200×1600');
+  $('rotateBtn').classList.toggle('hidden', m!=='works');
+  layout();
+  menu.classList.remove('open');
+}
+$('menuBtn').addEventListener('click', function(e){
+  e.stopPropagation(); menu.classList.toggle('open');
+});
+document.addEventListener('click', function(e){
+  if(menu.classList.contains('open') && !menu.contains(e.target) && e.target.id!=='menuBtn'){
+    menu.classList.remove('open');
   }
+});
+var modeBtns=document.querySelectorAll('.modeBtn');
+for(var i=0;i<modeBtns.length;i++){
+  (function(b){ b.addEventListener('click', function(){ setMode(b.getAttribute('data-mode')); }); })(modeBtns[i]);
+}
+$('camSwap').addEventListener('click', function(){
+  facing=(facing==='environment')?'user':'environment';
+  startCam(); menu.classList.remove('open');
+});
+$('themeBtn').addEventListener('click', function(){
+  var light=document.body.classList.toggle('light');
+  this.textContent=light?'Тёмная тема':'Светлая тема';
+  try{ localStorage.setItem('suncam_theme', light?'light':'dark'); }catch(e){}
+  menu.classList.remove('open');
+});
+$('settingsBtn').addEventListener('click', function(){
+  menu.classList.remove('open'); openSettings();
+});
+$('rotateBtn').addEventListener('click', function(){
+  worksRot=(worksRot==='h')?'v':'h';
+  this.textContent='Повернуть: '+(worksRot==='h'?'горизонталь':'вертикаль');
+  setMode('works');
+});
+$('zoomIn').addEventListener('click', function(){ zoom=Math.min(4, zoom+0.5); applyZoom(); });
+$('zoomOut').addEventListener('click', function(){ zoom=Math.max(1, zoom-0.5); applyZoom(); });
+$('shutter').addEventListener('click', shoot);
 
-  async function nextName(dirInfo, base){
-    var names = [];
-    try { var ls = await FS.readdir({ directory: dirInfo.cap, path: dirInfo.sub }); names = ls.files.map(function(f){return f.name;}); } catch(e){}
-    var max = 1, rx = new RegExp('^'+base+'(__(\\d+))?\\.jpg$');
-    names.forEach(function(n){ var m = n.match(rx); if (m){ if (m[2]) max = Math.max(max, parseInt(m[2],10)+1); else max = Math.max(max,2); } });
-    return max===1 ? base : base+'__'+max;
-  }
-
-  async function ensureDir(dirInfo){
-    try { await FS.mkdir({ directory: dirInfo.cap, path: dirInfo.sub, recursive:true }); } catch(e){}
-  }
-
-  async function write(dirInfo, name, blob){
-    var data = await blobToBase64(blob);
-    await ensureDir(dirInfo);
-    await FS.writeFile({ directory: dirInfo.cap, path: dirInfo.sub+'/'+name, data: data, recursive:true });
-  }
-
-  function blobToBase64(blob){
-    return new Promise(function(res, rej){
-      var r = new FileReader(); r.onload = function(){ res(r.result.split(',')[1]); }; r.onerror = rej; r.readAsDataURL(blob);
-    });
-  }
-
-  async function resolveAndSave(blob, base){
-    var chain = [chosenKey, 'DOWNLOADS', 'APP'].filter(function(v,i,a){ return a.indexOf(v)===i; });
-    var lastErr = null;
-    for (var i=0;i<chain.length;i++){
-      var d = DIRS[chain[i]];
-      try{
-        var name = await nextName(d, base);
-        await write(d, name, blob);
-        var where = d.label;
-        toastMsg('Сохранено: ' + where + (d.sub? ' / '+d.sub : '') + ' → ' + name);
-        return;
-      }catch(e){ lastErr = e; }
-    }
-    throw lastErr || new Error('нет доступа к папке');
-  }
-
-  function canvasBlob(cv){
-    return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, 'image/jpeg', 0.92); });
-  }
-
-  document.getElementById('shutter').addEventListener('click', async function(){
-    if (!video.videoWidth){ toastMsg('Камера ещё не готова'); return; }
-    var r = cropRect(); if (!r){ toastMsg('Камера ещё не готова'); return; }
-    var btn = this; btn.disabled = true;
-
-    // оригинал: полный кадр камеры как есть
-    var ov = document.createElement('canvas');
-    ov.width = video.videoWidth; ov.height = video.videoHeight;
-    ov.getContext('2d').drawImage(video, 0, 0, ov.width, ov.height);
-    var ob = await canvasBlob(ov);
-
-    // стандартный кадр из рамки
-    var cv = document.createElement('canvas');
-    if (MODE==='story'){
-      cv.width = 1080; cv.height = 1920;
-    } else {
-      cv.width = workOrient==='landscape' ? 1600 : 1200;
-      cv.height = workOrient==='landscape' ? 1200 : 1600;
-    }
-    cv.getContext('2d').drawImage(video, r.x, r.y, r.w, r.h, 0, 0, cv.width, cv.height);
-    var cb = await canvasBlob(cv);
-
-    if (MODE==='story'){
-      var obq = ob, cbq = cb;
-      if (ob) await resolveAndSave(ob, 'original_ctoris_kadr').catch(function(){});
-      if (cb){
-        await resolveAndSave(cb, 'kadr_storis').catch(function(){});
-        // обложка 800x800 — центральная часть кадра сторис
-        var sq = document.createElement('canvas'); sq.width=800; sq.height=800;
-        var side = Math.min(cv.width, cv.height);
-        sq.getContext('2d').drawImage(cv, (cv.width-side)/2, (cv.height-side)/2, side, side, 0, 0, 800, 800);
-        var sb = await canvasBlob(sq);
-        if (sb) await resolveAndSave(sb, 'oblojka_storis').catch(function(){});
+/* ---------- настройки: выбор папки ---------- */
+function checkDir(d){
+  if(!FS) return Promise.resolve(true);
+  if(d._checked) return Promise.resolve(d._ok);
+  return FS.mkdir({path:d.path, directory:d.dir, recursive:true}).catch(function(){}).then(function(){
+    return FS.writeFile({path:d.path+'/__probe.txt', directory:d.dir, data:'ok', recursive:true});
+  }).then(function(){
+    return FS.deleteFile({path:d.path+'/__probe.txt', directory:d.dir}).catch(function(){});
+  }).then(function(){ d._ok=true; d._checked=true; return true; })
+    .catch(function(){ d._ok=false; d._checked=true; return false; });
+}
+function openSettings(){ renderSettings(); settings.classList.add('open'); scrim.classList.add('open'); }
+function closeSettings(){ settings.classList.remove('open'); scrim.classList.remove('open'); }
+function renderSettings(){
+  var list=$('dirList'); list.innerHTML='';
+  DIR_LIST.forEach(function(d){
+    var btn=document.createElement('button');
+    btn.className='dirBtn'+(d.key===chosen?' selected':'');
+    var mark=document.createElement('span'); mark.className='mark';
+    mark.textContent=(d.key===chosen)?'Выбрано ✓':'Выбрать';
+    var lbl=document.createElement('span'); lbl.textContent=d.label;
+    var sm=document.createElement('small'); sm.textContent=d.path;
+    btn.appendChild(lbl); btn.appendChild(sm); btn.appendChild(mark);
+    btn.addEventListener('click', function(){
+      if(!FS){
+        chosen=d.key; try{ localStorage.setItem('suncam_dir', chosen); }catch(e){}
+        toast('Выбрано: '+d.label+' (в браузере — Загрузки)');
+        renderSettings(); closeSettings(); return;
       }
-    } else {
-      if (cb) await resolveAndSave(cb, 'raboti').catch(function(){});
-      if (ob) await resolveAndSave(ob, 'original_raboti').catch(function(){});
-    }
-    btn.disabled = false;
-  });
-
-  // ---------- настройки: список папок ----------
-  var settingsEl = document.getElementById('settings');
-  document.getElementById('settingsBtn').addEventListener('click', function(){ renderDirs(); settingsEl.style.display='block'; });
-  document.getElementById('sheetClose').addEventListener('click', function(){ settingsEl.style.display='none'; });
-  settingsEl.querySelector('.back').addEventListener('click', function(){ settingsEl.style.display='none'; });
-
-  function renderDirs(){
-    settingsEl.querySelectorAll('.fold').forEach(function(btn){
-      var k = btn.getAttribute('data-dir');
-      btn.classList.toggle('sel', k===chosenKey);
-      btn.onclick = async function(){
-        var d = DIRS[k];
-        var ok = true;
-        if (CAP_OK){
-          try { await ensureDir(d); await FS.writeFile({ directory:d.cap, path:d.sub+'/.sc_test', data:'ok' }); }
-          catch(e){ ok = false; }
+      btn.querySelector('.mark').textContent='Проверяю…';
+      checkDir(d).then(function(ok){
+        if(ok){
+          chosen=d.key; try{ localStorage.setItem('suncam_dir', chosen); }catch(e){}
+          renderSettings(); closeSettings(); toast('Папка сохранения: '+d.label);
+        }else{
+          btn.classList.add('bad');
+          btn.querySelector('.mark').textContent='Недоступно системой';
         }
-        if (ok){
-          chosenKey = k; localStorage.setItem('sc_dir', k);
-          renderDirs();
-          toastMsg('Папка выбрана: ' + d.label + (d.sub? ' / '+d.sub : ''));
-          settingsEl.style.display='none';
-        } else {
-          btn.classList.add('sel'); btn.textContent = d.label + ' — недоступно системой';
-          setTimeout(function(){ btn.innerHTML = d.label + '<small>' + (btn._sm || d.path) + '</small>'; }, 2500);
-        }
-      };
-      btn._sm = d.path;
-      if (!CAP_OK){ var s = btn.querySelector('small'); if (s) s.textContent = 'нет доступа к файловой системе (браузер)'; }
+      });
     });
-  }
+    list.appendChild(btn);
+  });
+}
+$('closeSettings').addEventListener('click', closeSettings);
+scrim.addEventListener('click', closeSettings);
 
-  mark(); calcFrame();
+/* ---------- запуск ---------- */
+try{
+  var th=localStorage.getItem('suncam_theme');
+  if(th==='light'){ document.body.classList.add('light'); $('themeBtn').textContent='Тёмная тема'; }
+}catch(e){}
+window.addEventListener('resize', layout);
+setMode('storis');
+applyZoom();
+startCam();
 })();
 </script>
 </body>
 </html>
+
 
 
